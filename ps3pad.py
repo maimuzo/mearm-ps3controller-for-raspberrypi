@@ -5,7 +5,6 @@
 # vim: fileencoding=utf-8
 
 import pygame
-from pygame.locals import *
 
 
 class PS3Pad:
@@ -42,7 +41,7 @@ class PS3Pad:
     L1_A = 14
     R1_A = 15
     TRIANGLE_A = 16
-    CIRCLE = 17
+    CIRCLE_A = 17
     CROSS_A = 18
     BOX_A = 19
 

@@ -16,8 +16,8 @@ class SG90Direct:
 	REFERENCE_PWM_1CYCLE_SEC = 0.02
 	MIN_ANGLE_SEC = 0.0005
 	MAX_ANGLE_SEC = 0.0024
-	MIN_ANGLE = -90
-	MAX_ANGLE = 90
+	MIN_ANGLE = 0
+	MAX_ANGLE = 180
 	MIN_PWM_VALUE = 0
 
 	def __init__(self, pin, pwmCountUpFrequency, pwmCycleRange):
@@ -50,13 +50,13 @@ class SG90Direct:
 	# PWMの操作は0〜pwmCycleRangeで行うので、このマッピングを行う
 	def _getPWMValue(self, degree):
 		if SG90Direct.MIN_ANGLE > degree:
-			return SG90Direct.MIN_PWM_VALUE
+			return self.minPmwValue
 		elif SG90Direct.MAX_ANGLE < degree:
-			return self.pwmCycleRange - 1
+			return self.maxPmwValue
 		else:
 			# マッピングする
 			percent = float(degree) / 180
-			return self.minPmwValue + int(percent * self.deltaPmwValue)
+			return int(self.minPmwValue + percent * self.deltaPmwValue)
 
 	def rotateTo(self, degree):
 		value = self._getPWMValue(degree)
