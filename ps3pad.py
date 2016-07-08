@@ -74,3 +74,6 @@ class PS3Pad:
 
     def isPressed(self, number):
         return 1 == self.joystick.get_button(number)
+
+    def shutdown(self):
+        pygame.quit()

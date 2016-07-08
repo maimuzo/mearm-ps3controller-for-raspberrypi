@@ -4,18 +4,19 @@
 # -*- coding: utf-8 -*-
 # vim: fileencoding=utf-8
 
+import sys,os
 import pygame
 import time
 from pygame.locals import *
-import wiringpi
 from ps3pad import PS3Pad
 
 
-import sys,os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/use_wiringpi_python')
-
-from sg90_direct import SG90Direct
 from rpi_direct_servo_controller import RPiDirectServoController
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/use_servoblaster')
+from rpi_servoblaster_controller import RPiServoblasterController
+
 
 
 # PS3コントローラーを操作して各サーボの角度を計算し、可動範囲内に収まるようにする
@@ -114,7 +115,8 @@ class HandCockpit:
 			elif e.type == pygame.locals.JOYBUTTONDOWN:
 				if self.pad.isPressed(PS3Pad.START):
 					print 'start button pressed. exit.'
-					pygame.quit()
+					self.controller.shutdown()
+					self.pad.shutdown()
 					sys.exit()
 				elif self.pad.isPressed(PS3Pad.TOP):
 					# pre-set 1
@@ -125,7 +127,8 @@ class HandCockpit:
 
 def main():
 	pad = PS3Pad()
-	controller = RPiDirectServoController()
+	# controller = RPiDirectServoController()
+	controller = RPiServoblasterController()
 	hand = HandCockpit(controller, pad)
 	while True:
 		hand.consumeEvents()

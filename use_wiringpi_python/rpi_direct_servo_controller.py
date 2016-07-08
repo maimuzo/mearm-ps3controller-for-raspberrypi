@@ -51,6 +51,10 @@ class RPiDirectServoController:
 		wiringpi.pwmSetClock(RPiDirectServoController.PWM_COUNTUP_FREQUENCY)
 		wiringpi.pwmSetRange(RPiDirectServoController.PWM_CYCLE_RANGE)
 
+	def shutdown(self):
+		# スレッドは使ってないので何もしない
+		return
+
 	def getIndexes(self):
 		return RPiDirectServoController.PIN_MAP.keys()
 

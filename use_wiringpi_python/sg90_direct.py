@@ -46,8 +46,8 @@ class SG90Direct:
 		print 'reference pwmCycleSec: ' + str(SG90Direct.REFERENCE_PWM_1CYCLE_SEC)
 		print 'minPmwValue: ' + str(self.minPmwValue) + ', maxPmwValue: ' + str(self.maxPmwValue) + ', deltaPmwValue: ' + str(self.deltaPmwValue)
 
-	# 操作は角度(degree)で行う。中間地点を0度とし、MIN=0度、MAX=180度とする
-	# PWMの操作は0〜pwmCycleRangeで行うので、このマッピングを行う
+	# 操作は角度(degree)で行う。MIN=0度、MAX=180度とする
+	# PWMの操作はminPmwValue〜maxPmwValueで行うので、このマッピングを行う
 	def _getPWMValue(self, degree):
 		if SG90Direct.MIN_ANGLE > degree:
 			return self.minPmwValue
