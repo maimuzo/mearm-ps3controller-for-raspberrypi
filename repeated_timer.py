@@ -21,5 +21,5 @@ class RepeatedTimer(threading._Timer):
 	def cancel(self):
 		if self.thread is not None:
 			self.thread.cancel()
-			self.thread.join()
+			# self.thread.join()
 			del self.thread

@@ -6,7 +6,9 @@
 
 import time
 import wiringpi
-from sg90_direct import SG90Direct
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')
+from rpi_direct_servo_controller import SG90Direct
 
 PWM_COUNTUP_FREQUENCY = 400 # Hz
 PWM_CYCLE_RANGE = 1024 # PWMの1サイクルの解像度0〜1023

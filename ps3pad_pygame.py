@@ -7,7 +7,7 @@
 import pygame
 
 
-class PS3Pad:
+class PS3PadPygame:
     # digital 0 to 18
     SELECT = 0
     L3 = 1
@@ -60,7 +60,9 @@ class PS3Pad:
                     and 19 == self.joystick.get_numbuttons():
                 pygame.init()
                 # 初期化しないとエラーになる
-                pygame.display.set_mode( (PS3Pad.SCREEN_WIDTH, PS3Pad.SCREEN_HEIGHT) )
+                print 'init display...'
+                screen = pygame.display.set_mode((PS3PadPygame.SCREEN_WIDTH, PS3PadPygame.SCREEN_HEIGHT))
+                print 'done.'
             else:
                 raise Exception('this joystick is no PS3 controller')
         except pygame.error:

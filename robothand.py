@@ -8,15 +8,13 @@ import sys,os
 import pygame
 import time
 from pygame.locals import *
-from ps3pad import PS3Pad
+from ps3pad_pygame import PS3PadPygame
 from repeated_timer import RepeatedTimer
 
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/use_wiringpi_python')
 from rpi_direct_servo_controller import RPiDirectServoController
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/use_servoblaster')
 from rpi_servoblaster_controller import RPiServoblasterController
+from rpi_pca9685_controller import RPiPCA9685Controller
 
 
 
@@ -41,7 +39,7 @@ class HandCockpit:
 	# サンプルを参考にする
 	# see: https://www.mearm.com/blogs/news/74739717-mearm-on-the-raspberry-pi-work-in-progress
 	RANGE = (
-		(0, 90), # waist
+		(0, 180), # waist
 		(60, 165), # boom
 		(40, 180), # arm
 		(60, 180), # craw
@@ -49,15 +47,15 @@ class HandCockpit:
 
 	# コントローラーの感度係数
 	SENSITIVITY = (
-		50.0, # waist
-		50.0, # boom
+		-50.0, # waist
+		-50.0, # boom
 		-50.0, # arm
 		50.0, # craw
 	)
 
 	# 定義済み位置(WAIST, BOOM, ARM, CRAW) 0〜180の範囲
 	PRESET = (
-		(90, 152, 90, 60), # initial position
+		(90, 112, 90, 60), # initial position
 		(20, 30, 40, 50), # topキー用
 	)
 
@@ -70,6 +68,7 @@ class HandCockpit:
 
 		self.lastUpdateAt = time.time()
 		self.isStartedAxisScanThread = False
+		self.isEnabledDebugPad = True
 
 		# 初期位置設定
 		self._apply()
@@ -92,6 +91,7 @@ class HandCockpit:
 		self.controller.apply(self.position)
 
 	def startAxisScanThread(self):
+		pygame.event.set_blocked(pygame.JOYAXISMOTION)
 		self.axisScanThread = RepeatedTimer(HandCockpit.SCAN_INTERVAL_SEC, self.scanAxis)
 		self.axisScanThread.start()
 		self.isStartedAxisScanThread = True
@@ -100,18 +100,20 @@ class HandCockpit:
 		if True == self.isStartedAxisScanThread:
 			self.isStartedAxisScanThread = False
 			self.axisScanThread.cancel()
+			pygame.event.set_blocked(None)
 
 	def scanAxis(self):
 		now = time.time()
 		delay = now - self.lastUpdateAt
 		self.lastUpdateAt = now
 
-		x1 = self.pad.getAnalog(PS3Pad.L3_AX)
-		y1 = self.pad.getAnalog(PS3Pad.L3_AY)
-		x2 = self.pad.getAnalog(PS3Pad.R3_AX)
-		y2 = self.pad.getAnalog(PS3Pad.R3_AY)
-		print 'delay: ' + str(delay) + 'x1 and y1 : ' + str(x1) + ', ' + str(y1) + ', x2 and y2 : ' + str(
-			x2) + ' , ' + str(y2)
+		x1 = self.pad.getAnalog(PS3PadPygame.L3_AX)
+		y1 = self.pad.getAnalog(PS3PadPygame.L3_AY)
+		x2 = self.pad.getAnalog(PS3PadPygame.R3_AX)
+		y2 = self.pad.getAnalog(PS3PadPygame.R3_AY)
+		if self.isEnabledDebugPad:
+			log = ('delay: %.3f, x1: %.3f, y1: %.3f, x2: %.3f, y2: %.3f' % (delay, x1, y1, x2, y2))
+			print log
 
 		# バックホーの操作レバー割当はJIS方式だと以下のようになっている
 		# 	（左レバー）			(右レバー)
@@ -119,7 +121,7 @@ class HandCockpit:
 		# 左旋回	○ 右旋回	 バケット掘削 ○ バケット開放
 		#	アーム曲げ			ブーム上げ
 		# よってバケットをクローに置き換えて
-		# (WAIST, ARM, BOOM, CRAW)の順に整理する
+		# (WAIST, BOOM, ARM, CRAW)の順に整理する
 		self.update((x1, y1, y2, x2), delay)
 
 	def consumeEvents(self):
@@ -127,29 +129,43 @@ class HandCockpit:
 		# print 'events: ' + str(len(events))
 		for e in events:
 			if e.type == pygame.locals.JOYBUTTONDOWN:
-				if self.pad.isPressed(PS3Pad.START):
+				if self.pad.isPressed(PS3PadPygame.START):
 					print 'start button pressed. exit.'
-					self.stopAxisScanThread()
-					self.controller.shutdown()
-					self.pad.shutdown()
-					sys.exit()
-				elif self.pad.isPressed(PS3Pad.TOP):
+					return False
+				elif self.pad.isPressed(PS3PadPygame.TOP):
 					# pre-set 1
 					print 'top button pressed.'
 					self.usePreset(1)
+				elif self.pad.isPressed(PS3PadPygame.CIRCLE):
+					self.switchDebugPad()
+				elif self.pad.isPressed(PS3PadPygame.BOX):
+					self.controller.switchDebugPosition()
+
 			elif False == self.isStartedAxisScanThread and e.type == pygame.locals.JOYAXISMOTION:
 				self.scanAxis()
+		return True
+
+
+	def switchDebugPad(self):
+		self.isEnabledDebugPad = not self.isEnabledDebugPad
+
 
 
 
 def main():
-	pad = PS3Pad()
+	pad = PS3PadPygame()
 	# controller = RPiDirectServoController()
-	controller = RPiServoblasterController()
+	# controller = RPiServoblasterController()
+	controller = RPiPCA9685Controller()
 	hand = HandCockpit(controller, pad)
 	hand.startAxisScanThread()
-	while True:
-		hand.consumeEvents()
+	running = True
+	while running:
+		running = hand.consumeEvents()
+	hand.stopAxisScanThread()
+	controller.shutdown()
+	pad.shutdown()
+
 
 if __name__ == '__main__' : 
 	main()

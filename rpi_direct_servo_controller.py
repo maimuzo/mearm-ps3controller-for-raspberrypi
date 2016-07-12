@@ -8,6 +8,74 @@ import time
 import wiringpi
 
 
+# サーボの制御方法を実装
+# SG90Directと一緒に使う
+# Paspberry PiのハードウェアPWMを使った実装(ただしちゃんと動かず)
+class RPiDirectServoController:
+	PWM_COUNTUP_FREQUENCY = 400  # Hz
+	PWM_CYCLE_RANGE = 1024  # PWMの1サイクルの解像度0〜1023
+
+	# ServoをPWM制御するピン番号
+	# hardware pwm pin, see: http://abyz.co.uk/rpi/pigpio/python.html#hardware_PWM
+	# $ gpio readall
+	# してBCMの列の数値を使う(wiringPiSetupGpio()しているので)
+	#
+	# #####################################################################
+	# ###GPIO12と13は同じ出力、GPIO18と19は同じ出力となるのでうまく動かない!! ###
+	# #####################################################################
+	#
+	WAIST_SERVO_PIN = 12
+	BOOM_SERVO_PIN = 13
+	ARM_SERVO_PIN = 18
+	CRAW_SERVO_PIN = 19
+
+	# 操作対象とピン番号のマップ
+	PIN_MAP = {
+		0: WAIST_SERVO_PIN,
+		1: BOOM_SERVO_PIN,
+		2: ARM_SERVO_PIN,
+		3: CRAW_SERVO_PIN,
+	}
+
+	def __init__(self):
+		# GPIO番号でピンを指定
+		wiringpi.wiringPiSetupGpio()
+
+		self.servos = []
+		for index in RPiDirectServoController.PIN_MAP.iterkeys():
+			pin = RPiDirectServoController.PIN_MAP[index]
+			# サーボを作る
+			self.servos.append(SG90Direct(pin, self.getPartName(index), RPiDirectServoController.PWM_COUNTUP_FREQUENCY, RPiDirectServoController.PWM_CYCLE_RANGE))
+
+		wiringpi.pwmSetMode(wiringpi.PWM_MODE_MS)
+		wiringpi.pwmSetClock(RPiDirectServoController.PWM_COUNTUP_FREQUENCY)
+		wiringpi.pwmSetRange(RPiDirectServoController.PWM_CYCLE_RANGE)
+
+	def shutdown(self):
+		# スレッドは使ってないので何もしない
+		return
+
+	def getIndexes(self):
+		return RPiDirectServoController.PIN_MAP.keys()
+
+	def apply(self, positions):
+		print '-------------'
+		for index in RPiDirectServoController.PIN_MAP.iterkeys():
+			degree = positions[index]
+			self.servos[index].rotateTo(degree)
+
+	def getPartName(self, index):
+		if(0 == index):
+			return 'WAIST'
+		elif(1 == index):
+			return 'ARM'
+		elif(2 == index):
+			return 'BOOM'
+		elif(3 == index):
+			return 'CRAW'
+		else:
+			return 'unknown'
+
 class SG90Direct:
 	# Raspberry Pi setting
 	PRI_PWM_BASE_CLOCK_FREQUENCY = 19200000 # 19.2MHz
@@ -20,10 +88,11 @@ class SG90Direct:
 	MAX_ANGLE = 180
 	MIN_PWM_VALUE = 0
 
-	def __init__(self, pin, pwmCountUpFrequency, pwmCycleRange):
+	def __init__(self, pin, name, pwmCountUpFrequency, pwmCycleRange):
 		# このservoが接続されるGPIO番号
 		# GPIO12またはGPIO18のみサポートされる(GPIO12と13は同じ内容、GPIO18と19は同じ内容となる)
 		self.pin = pin
+		self.name = name
 		self.pwmCountUpFrequency = pwmCountUpFrequency
 		self.pwmCycleRange = pwmCycleRange
 
@@ -61,5 +130,6 @@ class SG90Direct:
 	def rotateTo(self, degree):
 		value = self._getPWMValue(degree)
 		wiringpi.pwmWrite(self.pin, value)
-		print 'pin: ' + str(self.pin) + ', degree: ' + ('%.6f' % degree) + ', pwmValue: ' + str(value)
+		print 'pin: ' + str(self.pin) + '(' + self.name + '), degree: ' + ('%.6f' % degree) + ', pwmValue: ' + str(value)
 		time.sleep(0.3)
+
