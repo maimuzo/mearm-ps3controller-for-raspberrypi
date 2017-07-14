@@ -27,11 +27,12 @@ while True:
         if sw_status == 0:
             sw_counter = sw_counter + 1
             if sw_counter >= wait_sec:
-                print("長押し検知！")
+                print("長押し検知-shutdown")
                 os.system("sudo shutdown -h now")
                 break
         else:
-            print("短押し検知")
+            print("短押し検知-reboot")
+            os.system("sudo reboot")
             break
 
         time.sleep(1)
