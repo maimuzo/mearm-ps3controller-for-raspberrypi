@@ -15,9 +15,9 @@ internal_green_led_pin = 16
 GPIO.setmode(GPIO.BCM)
 
 # LEDコントロール用に16pinを出力モードに
-GPIO.setup(16, GPIO.OUT)
+GPIO.setup(internal_green_led_pin, GPIO.OUT)
 
-# GPIO18pinを入力モードとし、pull up設定とします
+# GPIO17pinを入力モードとし、pull up設定とします
 GPIO.setup(watch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 while True:
@@ -32,10 +32,10 @@ while True:
             sw_counter = sw_counter + 1
             if led_is_on:
                 # LED On
-                GPIO.output(16, GPIO.LOW)
+                GPIO.output(internal_green_led_pin, GPIO.LOW)
             else:
                 # LED Off
-                GPIO.output(16, GPIO.HIGH)
+                GPIO.output(internal_green_led_pin, GPIO.HIGH)
             led_is_on = not led_is_on
             if sw_counter >= wait_sec:
                 print("長押し検知-shutdown")
@@ -50,4 +50,4 @@ while True:
 
     print(sw_counter)
     # LED Off
-    GPIO.output(16, GPIO.HIGH)
+    GPIO.output(internal_green_led_pin, GPIO.HIGH)
