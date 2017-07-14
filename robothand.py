@@ -12,8 +12,8 @@ from ps3pad_pygame import PS3PadPygame
 from repeated_timer import RepeatedTimer
 
 
-from rpi_direct_servo_controller import RPiDirectServoController
-from rpi_servoblaster_controller import RPiServoblasterController
+# from rpi_direct_servo_controller import RPiDirectServoController
+# from rpi_servoblaster_controller import RPiServoblasterController
 from rpi_pca9685_controller import RPiPCA9685Controller
 
 
@@ -49,7 +49,7 @@ class HandCockpit:
 	SENSITIVITY = (
 		-50.0, # waist
 		-50.0, # boom
-		-50.0, # arm
+		50.0, # arm
 		50.0, # craw
 	)
 
